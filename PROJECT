@@ -1,0 +1,6 @@
+domain: tutorial.kubebuilder.io
+layout:
+- go.kubebuilder.io/v3
+projectName: kubebuilder-trying
+repo: github.com/piyush1146115/kubebuilder-trying
+version: "3"
