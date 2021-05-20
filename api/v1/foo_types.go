@@ -34,7 +34,6 @@ type FooSpec struct {
 	// +kubebuilder:validation:MinLength=1
 	Name string `json:"name,omitempty"`
 
-	// +kubebuilder:validation:Minimum=0
 	// +optional
 	Rank Rank `json:"rank,omitempty"`
 
@@ -64,6 +63,11 @@ type FooStatus struct {
 //+kubebuilder:subresource:status
 
 // Foo is the Schema for the foos API
+// +kubebuilder:printcolumn:name="Name",type=string,JSONPath=`.spec.name`
+// +kubebuilder:printcolumn:name="Rank",type=integer,JSONPath=`.spec.rank`
+// +kubebuilder:printcolumn:name="Bravely Run Away",type=boolean,JSONPath=`.spec.knights[?(@ == "Sir Robin")]`,description="when danger rears its ugly head, he bravely turned his tail and fled",priority=10
+// +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
+// +kubebuilder:subresource:status
 type Foo struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
