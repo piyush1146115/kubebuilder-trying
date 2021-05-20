@@ -16,7 +16,23 @@ spec:
     singular: foo
   scope: Namespaced
   versions:
-  - name: v1
+  - additionalPrinterColumns:
+    - jsonPath: .spec.name
+      name: Name
+      type: string
+    - jsonPath: .spec.rank
+      name: Rank
+      type: integer
+    - description: when danger rears its ugly head, he bravely turned his tail and
+        fled
+      jsonPath: .spec.knights[?(@ == "Sir Robin")]
+      name: Bravely Run Away
+      priority: 10
+      type: boolean
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1
     schema:
       openAPIV3Schema:
         description: Foo is the Schema for the foos API
@@ -50,6 +66,13 @@ spec:
                 format: int32
                 maximum: 3
                 minimum: 1
+                type: integer
+              replicas:
+                description: Replicas is the number of replicas that should be specified
+                  on the Deployment resource that the controller creates. If not specified,
+                  one replica will be created.
+                format: int32
+                minimum: 0
                 type: integer
             type: object
           status:

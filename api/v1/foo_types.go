@@ -37,6 +37,13 @@ type FooSpec struct {
 	// +optional
 	Rank Rank `json:"rank,omitempty"`
 
+	// Replicas is the number of replicas that should be specified on the
+	// Deployment resource that the controller creates.
+	// If not specified, one replica will be created.
+	// +optional
+	// +kubebuilder:validation:Minimum=0
+	Replicas *int32 `json:"replicas,omitempty"`
+
 	// Foo is an example field of Foo. Edit foo_types.go to remove/update
 	// +optional
 	Foo string `json:"foo,omitempty"`
