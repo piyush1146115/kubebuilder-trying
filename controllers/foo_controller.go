@@ -35,10 +35,10 @@ import (
 // FooReconciler reconciles a Foo object
 type FooReconciler struct {
 	client.Client
-	Log    logr.Logger
+	Log logr.Logger
 
 	Recorder record.EventRecorder
-	Scheme *runtime.Scheme
+	Scheme   *runtime.Scheme
 }
 
 //+kubebuilder:rbac:groups=batch.piyush.kubebuilder.io,resources=foos,verbs=get;list;watch;create;update;patch;delete
@@ -46,7 +46,6 @@ type FooReconciler struct {
 //+kubebuilder:rbac:groups=batch.piyush.kubebuilder.io,resources=foos/finalizers,verbs=update
 // +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;delete
 // +kubebuilder:rbac:groups="",resources=events,verbs=create;patch
-
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -94,9 +93,37 @@ func (r *FooReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 		}
 
 		r.Recorder.Eventf(&foo, core.EventTypeNormal, "Created", "Created deployment %q", deployment.Name)
-		log.Info("created Deployment resource for MyKind")
+		log.Info("created Deployment resource for Foo")
 		return ctrl.Result{}, nil
 	}
+
+	if err != nil {
+		log.Error(err, "failed to get Deployment for Foo resource")
+		return ctrl.Result{}, err
+	}
+
+	log.Info("existing Deployment resource already exists for Foo, checking replica count")
+
+	expectedReplicas := int32(1)
+	if foo.Spec.Replicas != nil {
+		expectedReplicas = *foo.Spec.Replicas
+	}
+	if *deployment.Spec.Replicas != expectedReplicas {
+		log.Info("updating replica count", "old_count", *deployment.Spec.Replicas, "new_count", expectedReplicas)
+
+		deployment.Spec.Replicas = &expectedReplicas
+		if err := r.Client.Update(ctx, &deployment); err != nil {
+			log.Error(err, "failed to Deployment update replica count")
+			return ctrl.Result{}, err
+		}
+
+		r.Recorder.Eventf(&foo, core.EventTypeNormal, "Scaled", "Scaled deployment %q to %d replicas", deployment.Name, expectedReplicas)
+
+		return ctrl.Result{}, nil
+	}
+
+	log.Info("replica count up to date", "replica_count", *deployment.Spec.Replicas)
+	log.Info("updating Foo resource status")
 
 	return ctrl.Result{}, nil
 }
@@ -111,8 +138,6 @@ func (r *FooReconciler) SetupWithManager(mgr ctrl.Manager) error {
 var (
 	deploymentOwnerKey = ".metadata.controller"
 )
-
-
 
 func buildDeployment(foo batchv1.Foo) *apps.Deployment {
 	deployment := apps.Deployment{
@@ -148,12 +173,9 @@ func buildDeployment(foo batchv1.Foo) *apps.Deployment {
 	return &deployment
 }
 
-
-
-
 // cleanupOwnedResources will Delete any existing Deployment resources that
-// were created for the given MyKind that no longer match the
-// myKind.spec.deploymentName field.
+// were created for the given Foo that no longer match the
+// foo.spec.Name field.
 func (r *FooReconciler) cleanupOwnedResources(ctx context.Context, log logr.Logger, foo *batchv1.Foo) error {
 	log.Info("finding existing Deployments for MyKind resource")
 

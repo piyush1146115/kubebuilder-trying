@@ -1,0 +1,8 @@
+apiVersion: batch.piyush.kubebuilder.io/v1
+kind: Foo
+# namespace: default
+spec:
+  name: 'Foo-check'
+  replicas: 2
+  rank: 1
+
