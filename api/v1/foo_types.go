@@ -28,14 +28,36 @@ type FooSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
+	// Name is the name of the Deployment resource that the
+	// controller should create.
+	// +kubebuilder:validation:MaxLength=15
+	// +kubebuilder:validation:MinLength=1
+	Name string `json:"name,omitempty"`
+
+	// +kubebuilder:validation:Minimum=0
+	// +optional
+	Rank Rank `json:"rank,omitempty"`
+
 	// Foo is an example field of Foo. Edit foo_types.go to remove/update
+	// +optional
 	Foo string `json:"foo,omitempty"`
 }
+
+// +kubebuilder:validation:Minimum=1
+// +kubebuilder:validation:Maximum=3
+// +kubebuilder:validation:ExclusiveMaximum=false
+type Rank int32
 
 // FooStatus defines the observed state of Foo
 type FooStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
+
+	// ReadyReplicas is the number of 'ready' replicas observed on the
+	// Deployment resource created for this MyKind resource.
+	// +optional
+	// +kubebuilder:validation:Minimum=0
+	ReadyReplicas int32 `json:"readyReplicas,omitempty"`
 }
 
 //+kubebuilder:object:root=true
