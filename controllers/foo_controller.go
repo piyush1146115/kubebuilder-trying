@@ -63,28 +63,28 @@ func (r *FooReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 	log := r.Log.WithValues("foo", req.NamespacedName)
 
 	// your logic here
-	log.Info("fetching MyKind resource")
+	log.Info("Fetching Foo resource")
 	foo := batchv1.Foo{}
 	if err := r.Client.Get(ctx, req.NamespacedName, &foo); err != nil {
-		log.Error(err, "failed to get Foo resource")
+		log.Error(err, "Failed to get Foo resource")
 		// Ignore NotFound errors as they will be retried automatically if the
 		// resource is created in future.
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
 	if err := r.cleanupOwnedResources(ctx, log, &foo); err != nil {
-		log.Error(err, "failed to clean up old Deployment resources for this foo")
+		log.Error(err, "Failed to clean up old Deployment resources for this foo")
 		return ctrl.Result{}, err
 	}
 
 	log = log.WithValues("deployment_name", foo.Spec.Name)
 
-	log.Info("checking if an existing Deployment exists for this resource")
+	log.Info("Checking if an existing Deployment exists for this resource")
 	deployment := apps.Deployment{}
 	err := r.Client.Get(ctx, client.ObjectKey{Namespace: foo.Namespace, Name: foo.Spec.Name}, &deployment)
 
 	if apierrors.IsNotFound(err) {
-		log.Info("could not find existing Deployment for MyKind, creating one...")
+		log.Info("Could not find existing Deployment for Foo, creating one...")
 
 		deployment = *buildDeployment(foo)
 		if err := r.Client.Create(ctx, &deployment); err != nil {
@@ -92,6 +92,9 @@ func (r *FooReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 			return ctrl.Result{}, err
 		}
 
+		log.Info("Passed here")
+
+		//r.Recorder.
 		r.Recorder.Eventf(&foo, core.EventTypeNormal, "Created", "Created deployment %q", deployment.Name)
 		log.Info("created Deployment resource for Foo")
 		return ctrl.Result{}, nil

@@ -72,6 +72,7 @@ type FooStatus struct {
 // Foo is the Schema for the foos API
 // +kubebuilder:printcolumn:name="Name",type=string,JSONPath=`.spec.name`
 // +kubebuilder:printcolumn:name="Rank",type=integer,JSONPath=`.spec.rank`
+// +kubebuilder:printcolumn:name="Replica",type=integer,JSONPath=`.spec.replica`
 // +kubebuilder:printcolumn:name="Bravely Run Away",type=boolean,JSONPath=`.spec.knights[?(@ == "Sir Robin")]`,description="when danger rears its ugly head, he bravely turned his tail and fled",priority=10
 // +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
 // +kubebuilder:subresource:status
