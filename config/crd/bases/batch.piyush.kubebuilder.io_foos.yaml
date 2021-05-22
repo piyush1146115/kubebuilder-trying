@@ -23,6 +23,9 @@ spec:
     - jsonPath: .spec.rank
       name: Rank
       type: integer
+    - jsonPath: .spec.replicas
+      name: Replica
+      type: integer
     - description: when danger rears its ugly head, he bravely turned his tail and
         fled
       jsonPath: .spec.knights[?(@ == "Sir Robin")]
@@ -35,7 +38,6 @@ spec:
     name: v1
     schema:
       openAPIV3Schema:
-        description: Foo is the Schema for the foos API
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
