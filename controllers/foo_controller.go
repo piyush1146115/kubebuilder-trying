@@ -18,16 +18,17 @@ package controllers
 
 import (
 	"context"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/tools/record"
-
+	"fmt"
 	"github.com/go-logr/logr"
 	apps "k8s.io/api/apps/v1"
 	core "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	batchv1 "github.com/piyush1146115/kubebuilder-trying/api/v1"
 )
@@ -61,6 +62,57 @@ func (r *FooReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 
 	//ctx := context.Background()
 	log := r.Log.WithValues("foo", req.NamespacedName)
+
+	// Finalizers
+	var fooPtr *batchv1.Foo
+	fooPtr = &batchv1.Foo{}
+	//log.Info("Checked")
+	//print(fooPtr)
+	// name of our custom finalizer
+	myFinalizerName := "batch.piyush.kubebuilder.io/finalizer"
+	// examine DeletionTimestamp to determine if object is under deletion
+	if err := r.Get(ctx, req.NamespacedName, fooPtr); err != nil {
+		log.Error(err, "Unable to fetch Foo")
+		return ctrl.Result{}, client.IgnoreNotFound(err)
+	}
+	//fmt.Println("----------------------------comes here-------------------------------------")
+	//fooPtr.ObjectMeta.DeletionTimestamp.IsZero()
+	if fooPtr.ObjectMeta.DeletionTimestamp.IsZero() {
+		fmt.Println("----------------------------comes here 1-------------------------------------")
+		// The object is not being deleted, so if it does not have our finalizer,
+		// then lets add the finalizer and update the object. This is equivalent
+		// registering our finalizer.
+
+		log.Info("Adding finalizer to foo resource")
+		//if !containsString(fooPtr.GetFinalizers(), myFinalizerName) {
+		//	controllerutil.AddFinalizer(fooPtr, myFinalizerName)
+		//	if err := r.Update(ctx, fooPtr); err != nil {
+		//		return ctrl.Result{}, err
+		//	}
+		//}
+	} else {
+		//fmt.Println("----------------------------comes here 2-------------------------------------")
+		log.Info("The resouce is being deleted")
+		// The object is being deleted
+		if containsString(fooPtr.GetFinalizers(), myFinalizerName) {
+			// our finalizer is present, so lets handle any external dependency
+			log.Info("Finalizer is doing it's tasks")
+			if err := r.deleteExternalResources(fooPtr); err != nil {
+				// if fail to delete the external dependency here, return with error
+				// so that it can be retried
+				return ctrl.Result{}, err
+			}
+
+			// remove our finalizer from the list and update it.
+			controllerutil.RemoveFinalizer(fooPtr, myFinalizerName)
+			if err := r.Update(ctx, fooPtr); err != nil {
+				return ctrl.Result{}, err
+			}
+		}
+		log.Info("Stopping reconciler from finalizer functions")
+		// Stop reconciliation as the item is being deleted
+		return ctrl.Result{}, nil
+	}
 
 	// your logic here
 	log.Info("Fetching Foo resource")
@@ -129,6 +181,35 @@ func (r *FooReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 	log.Info("updating Foo resource status")
 
 	return ctrl.Result{}, nil
+}
+
+func (r *FooReconciler) deleteExternalResources(foo *batchv1.Foo) error {
+	//
+	// delete any external resources associated with the cronJob
+	//
+	// Ensure that delete implementation is idempotent and safe to invoke
+	// multiple times for same object.
+	return nil
+}
+
+// Helper functions to check and remove string from a slice of strings.
+func containsString(slice []string, s string) bool {
+	for _, item := range slice {
+		if item == s {
+			return true
+		}
+	}
+	return false
+}
+
+func removeString(slice []string, s string) (result []string) {
+	for _, item := range slice {
+		if item == s {
+			continue
+		}
+		result = append(result, item)
+	}
+	return
 }
 
 // SetupWithManager sets up the controller with the Manager.
