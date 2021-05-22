@@ -18,7 +18,6 @@ package controllers
 
 import (
 	"context"
-	"fmt"
 	"github.com/go-logr/logr"
 	apps "k8s.io/api/apps/v1"
 	core "k8s.io/api/core/v1"
@@ -65,6 +64,7 @@ func (r *FooReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 
 	// Finalizers
 	var fooPtr *batchv1.Foo
+	log.Info("Fetching Foo resource for adding finalizer")
 	fooPtr = &batchv1.Foo{}
 	//log.Info("Checked")
 	//print(fooPtr)
@@ -78,18 +78,18 @@ func (r *FooReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 	//fmt.Println("----------------------------comes here-------------------------------------")
 	//fooPtr.ObjectMeta.DeletionTimestamp.IsZero()
 	if fooPtr.ObjectMeta.DeletionTimestamp.IsZero() {
-		fmt.Println("----------------------------comes here 1-------------------------------------")
+		//fmt.Println("----------------------------comes here 1-------------------------------------")
 		// The object is not being deleted, so if it does not have our finalizer,
 		// then lets add the finalizer and update the object. This is equivalent
 		// registering our finalizer.
 
 		log.Info("Adding finalizer to foo resource")
-		//if !containsString(fooPtr.GetFinalizers(), myFinalizerName) {
-		//	controllerutil.AddFinalizer(fooPtr, myFinalizerName)
-		//	if err := r.Update(ctx, fooPtr); err != nil {
-		//		return ctrl.Result{}, err
-		//	}
-		//}
+		if !containsString(fooPtr.GetFinalizers(), myFinalizerName) {
+			controllerutil.AddFinalizer(fooPtr, myFinalizerName)
+			if err := r.Update(ctx, fooPtr); err != nil {
+				return ctrl.Result{}, err
+			}
+		}
 	} else {
 		//fmt.Println("----------------------------comes here 2-------------------------------------")
 		log.Info("The resouce is being deleted")
@@ -102,7 +102,6 @@ func (r *FooReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 				// so that it can be retried
 				return ctrl.Result{}, err
 			}
-
 			// remove our finalizer from the list and update it.
 			controllerutil.RemoveFinalizer(fooPtr, myFinalizerName)
 			if err := r.Update(ctx, fooPtr); err != nil {
